@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ICE Management System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="login-view" class="login" hidden>
+    <form id="login-form" class="login-card">
+      <h1>ICE Management</h1>
+      <p class="muted">International Center of Evangelism, Jos</p>
+      <label>Username<input name="username" required autocomplete="username"></label>
+      <label>Password<input name="password" type="password" required autocomplete="current-password"></label>
+      <button class="btn primary" type="submit" id="login-btn">Sign in</button>
+      <a href="#" id="toggle-mode" class="muted small">First time? Create the admin account</a>
+      <p id="login-error" class="error"></p>
+    </form>
+  </div>
+
+  <div id="app-view" class="layout" hidden>
+    <aside class="sidebar">
+      <div class="brand">ICE<span>Management</span></div>
+      <nav id="nav">
+        <button data-view="dashboard">Dashboard</button>
+        <button data-view="staffs">Staff</button>
+        <button data-view="members">Members</button>
+        <button data-view="donors">Donors</button>
+        <button data-view="donations">Donations</button>
+        <button data-view="gifts">Online Gifts</button>
+        <button data-view="events">Events</button>
+        <button data-view="registrations">Registrations</button>
+        <button data-view="gallery">Gallery</button>
+        <button data-view="messages">Messages</button>
+        <button data-view="reports">Reports</button>
+      </nav>
+      <button id="logout" class="logout">Sign out</button>
+    </aside>
+    <main>
+      <header class="topbar"><h1 id="page-title"></h1></header>
+      <section id="content"></section>
+    </main>
+  </div>
+
+  <dialog id="modal"></dialog>
+  <div id="toast" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>
