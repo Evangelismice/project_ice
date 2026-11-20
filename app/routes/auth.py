@@ -12,10 +12,10 @@ router = APIRouter(prefix='/auth', tags=['Auth'])
 
 @router.post('/register', status_code=status.HTTP_201_CREATED)
 def register(data: UserCreate, db: Session = Depends(get_db)):
-    """The first admin can register freely; after that only a logged-in admin can add users."""
+    """The first user to register becomes admin; subsequent registrations blocked."""
     if db.query(User).count() > 0:
         raise HTTPException(status_code=403, detail='Use /auth/add-user while logged in')
-    user = User(username=data.username, password=hash_password(data.password))
+    user = User(username=data.username, password=hash_password(data.password), is_admin=True)
     db.add(user)
     db.commit()
     return {'message': 'Admin created'}
@@ -25,7 +25,9 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
 def add_user(data: UserCreate, db: Session = Depends(get_db), _=Depends(get_current_user)):
     if db.query(User).filter(User.username == data.username).first():
         raise HTTPException(status_code=400, detail='Username already exists')
-    db.add(User(username=data.username, password=hash_password(data.password)))
+    if db.query(User).filter(User.is_admin == True).count() >= 1:
+        raise HTTPException(status_code=403, detail='Only one admin user is allowed')
+    db.add(User(username=data.username, password=hash_password(data.password), is_admin=False))
     db.commit()
     return {'message': 'User created'}
 
