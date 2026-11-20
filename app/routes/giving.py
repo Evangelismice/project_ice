@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..config.settings import SITE_URL, PAYSTACK_SECRET_KEY
+from ..config.settings import SITE_URL, PAYSTACK_SECRET_KEY, PAYSTACK_PUBLIC_KEY
 from ..enums import DonorType, PaymentMethod
 from ..models.donors import Donor
 from ..models.donations import Donation
@@ -117,6 +117,11 @@ async def webhook(request: Request, db: Session = Depends(get_db)):
         info = event.get('data') or {}
         finalize_gift(db, info.get('reference'), info.get('amount'))
     return {'ok': True}
+
+
+@router.get('/public-key')
+def public_key():
+    return {'public_key': PAYSTACK_PUBLIC_KEY}
 
 
 @router.get('/', response_model=List[GiftResponse], dependencies=[Depends(get_current_user)])
