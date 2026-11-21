@@ -5,7 +5,4 @@ from .donors import Donor
 from .donations import Donation
 from .messages import ContactMessage
 from .events import Event
-from .registrations import Registration
-from .members import Member
-from .gallery import GalleryItem
-from .gifts import OnlineGift
+from .gallery import GalleryImage

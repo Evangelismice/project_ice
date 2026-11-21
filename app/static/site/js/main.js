@@ -75,7 +75,7 @@ function bindForm(form, note, url, extra = () => ({}), okMessage = 'Thank you! W
 async function initHome() {
   const box = $('#home-events');
   try {
-    const list = (await http.get('/events/')).slice(0, 3);
+    const list = (await http.get('/public/events')).slice(0, 3);
     box.innerHTML = list.length ? list.map((ev) => eventCard(ev, false)).join('') : '<p class="muted">New events will be announced here soon.</p>';
   } catch { box.innerHTML = ''; }
 }
@@ -83,7 +83,7 @@ async function initHome() {
 async function initEvents() {
   const box = $('#events'); const dialog = $('#reg-dialog'); const form = $('#reg-form'); const note = $('#reg-note');
   try {
-    const list = await http.get('/events/');
+    const list = await http.get('/public/events');
     box.innerHTML = list.length ? list.map((ev) => eventCard(ev, true)).join('') : '<p class="muted">There are no upcoming events right now. Please check back soon.</p>';
   } catch { box.innerHTML = '<p class="muted">Events could not be loaded. Please try again later.</p>'; }
   box.addEventListener('click', (e) => {
@@ -97,9 +97,9 @@ async function initEvents() {
 async function initGallery() {
   const box = $('#gallery');
   try {
-    const items = await http.get('/gallery/');
+    const items = await http.get('/public/gallery?limit=50');
     box.innerHTML = items.length
-      ? items.map((i) => `<figure><img src="${esc(i.url)}" alt="${esc(i.title)}" loading="lazy"><figcaption>${esc(i.caption || i.title)}</figcaption></figure>`).join('')
+      ? items.map((i) => `<figure><img src="${esc(i.image_url.replace('/upload/', '/upload/w_700,q_auto,f_auto/'))}" alt="${esc(i.description || 'ICE gallery photo')}" loading="lazy">${i.description ? `<figcaption>${esc(i.description)}</figcaption>` : ''}</figure>`).join('')
       : '<p class="muted">Photos will be added soon.</p>';
   } catch { box.innerHTML = '<p class="muted">The gallery could not be loaded.</p>'; }
 }

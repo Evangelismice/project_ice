@@ -3,17 +3,13 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 
-class EventBase(BaseModel):
+class EventCreate(BaseModel):
     title: str
     description: Optional[str] = None
     location: Optional[str] = None
     event_date: date
     event_time: Optional[str] = None
-    is_published: bool = True
-
-
-class EventCreate(EventBase):
-    pass
+    image_url: Optional[str] = None
 
 
 class EventUpdate(BaseModel):
@@ -22,10 +18,10 @@ class EventUpdate(BaseModel):
     location: Optional[str] = None
     event_date: Optional[date] = None
     event_time: Optional[str] = None
-    is_published: Optional[bool] = None
+    image_url: Optional[str] = None
 
 
-class EventResponse(EventBase):
+class EventResponse(EventCreate):
     model_config = ConfigDict(from_attributes=True)
 
     id: int

@@ -3,15 +3,10 @@ from sqlalchemy.sql import func
 from .base import Base
 
 
-class GalleryItem(Base):
-    __tablename__ = 'gallery'
+class GalleryImage(Base):
+    __tablename__ = 'gallery_images'
 
     id = Column(Integer, primary_key=True, nullable=False, index=True)
-    title = Column(String(150), nullable=False)
-    caption = Column(String(255), nullable=True)
-    filename = Column(String(255), nullable=False)
+    image_url = Column(String(500), nullable=False)
+    description = Column(String(150), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    @property
-    def url(self):
-        return f'/uploads/{self.filename}'

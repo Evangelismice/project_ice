@@ -10,21 +10,68 @@
 </head>
 <body data-page="give">
 <div id="site-header"></div>
-<section class="page-hero"><div class="wrap"><h1>Give Online</h1><p>Your gift helps equip churches to complete the Great Commission. Payments are processed securely by Paystack.</p></div></section>
-<section class="sec"><div class="wrap two">
-<div class="reveal"><p class="eyebrow red">Partner With Us</p><h2>Support the work of evangelism</h2>
-<p>Every gift, large or small, helps train leaders and church workers, provide evangelism resources and plant churches in Nigeria and neighbouring nations.</p>
-<p class="muted">You will be taken to a secure Paystack page to pay by card, bank transfer or USSD. ICE never sees or stores your card details.</p></div>
-<div><div id="give-banner" class="alert" hidden></div>
-<form id="give-form" class="form reveal">
-<div><label>Choose an amount (NGN)</label><div class="chips" style="margin-top:.5rem">
-<button type="button" class="chip" data-amt="5000">&#8358;5,000</button><button type="button" class="chip" data-amt="10000">&#8358;10,000</button>
-<button type="button" class="chip" data-amt="20000">&#8358;20,000</button><button type="button" class="chip" data-amt="50000">&#8358;50,000</button></div></div>
-<label>Amount (NGN)<input id="amount" name="amount" type="number" min="100" step="1" required></label>
-<label>Full name<input name="name" required></label><label>Email<input name="email" type="email" required></label>
-<label>Purpose<select name="purpose"><option value="General support">General support</option><option value="International School of Evangelism">International School of Evangelism</option>
-<option value="Great Commission Challenge Camps">Great Commission Challenge Camps</option><option value="Evangelism Resources">Evangelism Resources</option></select></label>
-<button class="btn" type="submit">Give securely</button><p id="give-note" class="note" role="status"></p></form></div></div></section>
+
+<section class="page-hero">
+  <div class="wrap">
+    <h1>Give Online</h1>
+    <p>Your gift helps equip churches to complete the Great Commission. Payments are processed securely by Paystack.</p>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap two">
+    <div class="reveal">
+      <p class="eyebrow red">Partner With Us</p>
+      <h2>Support the work of evangelism</h2>
+      <p>Every gift, large or small, helps train leaders and church workers, provide evangelism resources and plant churches in Nigeria and neighbouring nations.</p>
+      <p class="muted">You will be taken to a secure Paystack page to pay by card, bank transfer or USSD. ICE never sees or stores your card details.</p>
+    </div>
+
+    <div>
+      <div id="give-banner" class="alert" hidden></div>
+
+      <form id="give-form" class="form reveal">
+        <div>
+          <label>Choose an amount (NGN)</label>
+          <div class="chips" style="margin-top:.5rem">
+            <button type="button" class="chip" data-amt="5000">&#8358;5,000</button>
+            <button type="button" class="chip" data-amt="10000">&#8358;10,000</button>
+            <button type="button" class="chip" data-amt="20000">&#8358;20,000</button>
+            <button type="button" class="chip" data-amt="50000">&#8358;50,000</button>
+          </div>
+        </div>
+
+        <label>Amount (NGN)
+          <input id="amount" name="amount" type="number" min="100" step="1" inputmode="numeric" required
+                 placeholder="Enter amount in &#8358;, e.g. 5000">
+          <small class="hint">Minimum &#8358;100. Pick an amount above or type your own.</small>
+        </label>
+
+        <label>Full name
+          <input name="name" required maxlength="100" autocomplete="name" placeholder="Your full name">
+        </label>
+
+        <label>Email
+          <input name="email" type="email" required autocomplete="email" placeholder="you@example.com">
+          <small class="hint">Paystack needs your email to process the payment.</small>
+        </label>
+
+        <label>What are you giving towards?
+          <select name="purpose">
+            <option value="">Select a purpose (optional)</option>
+            <option value="General support">General support</option>
+            <option value="International School of Evangelism">International School of Evangelism</option>
+            <option value="Great Commission Challenge Camps">Great Commission Challenge Camps</option>
+            <option value="Evangelism Resources">Evangelism Resources</option>
+          </select>
+        </label>
+
+        <button class="btn" type="submit">Give securely</button>
+        <p id="give-note" class="note" role="status"></p>
+      </form>
+    </div>
+  </div>
+</section>
 
 <div id="site-footer"></div>
 <script src="js/main.js"></script>

@@ -1,13 +1,20 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class GalleryResponse(BaseModel):
+class GalleryCreate(BaseModel):
+    image_url: str = Field(max_length=500)
+    description: Optional[str] = Field(default=None, max_length=150)
+
+
+class GalleryUpdate(BaseModel):
+    image_url: Optional[str] = Field(default=None, max_length=500)
+    description: Optional[str] = Field(default=None, max_length=150)
+
+
+class GalleryResponse(GalleryCreate):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    title: str
-    caption: Optional[str] = None
-    url: str
     created_at: Optional[datetime] = None

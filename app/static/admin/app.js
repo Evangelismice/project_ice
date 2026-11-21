@@ -43,7 +43,6 @@ const OPT = {
   staffStatus: ['active', 'on_leave', 'resigned', 'retired'],
   donorType: ['individual', 'church', 'organization'],
   payment: ['cash', 'bank_transfer', 'cheque', 'online'],
-  memberType: ['member', 'partner', 'volunteer'],
 };
 
 // ---------- Entity config ----------
@@ -93,79 +92,35 @@ const ENT = {
       { n: 'notes', l: 'Notes', t: 'textarea', full: true },
     ],
   },
-  members: {
-    title: 'Members', single: 'Member', path: '/members/', search: true,
-    filter: { param: 'member_type', label: 'All types', options: OPT.memberType },
-    cols: [
-      { h: 'Name', v: (r) => r.name },
-      { h: 'Type', v: (r) => label(r.member_type) },
-      { h: 'Phone', v: (r) => r.phone },
-      { h: 'Email', v: (r) => r.email },
-      { h: 'Address', v: (r) => r.address },
-    ],
-    fields: [
-      { n: 'name', l: 'Name', req: true, full: true },
-      { n: 'member_type', l: 'Type', t: 'select', o: OPT.memberType, req: true, d: 'member' },
-      { n: 'phone', l: 'Phone' },
-      { n: 'email', l: 'Email', t: 'email', full: true },
-      { n: 'address', l: 'Address', full: true },
-      { n: 'notes', l: 'Notes', t: 'textarea', full: true },
-    ],
-  },
   events: {
-    title: 'Events', single: 'Event', path: '/events/', listPath: '/events/manage',
+    title: 'Events', single: 'Event', path: '/events/', search: true,
     cols: [
+      { h: 'Photo', v: (r) => r.image_url, img: true },
       { h: 'Date', v: (r) => r.event_date },
-      { h: 'Time', v: (r) => r.event_time },
       { h: 'Title', v: (r) => r.title },
+      { h: 'Time', v: (r) => r.event_time },
       { h: 'Location', v: (r) => r.location },
-      { h: 'Published', v: (r) => (r.is_published ? 'Yes' : 'No') },
     ],
     fields: [
       { n: 'title', l: 'Title', req: true, full: true },
       { n: 'event_date', l: 'Date', t: 'date', req: true },
-      { n: 'event_time', l: 'Time', t: 'time' },
+      { n: 'event_time', l: 'Time' },
       { n: 'location', l: 'Location', full: true },
       { n: 'description', l: 'Description', t: 'textarea', full: true },
-      { n: 'is_published', l: 'Show on website', t: 'checkbox', d: true },
+      { n: 'image_url', l: 'Event image', t: 'image', full: true },
     ],
-  },
-  registrations: {
-    title: 'Registrations', single: 'Registration', path: '/registrations/', search: true, noAdd: true, noEdit: true,
-    cols: [
-      { h: 'Date', v: (r) => (r.created_at || '').slice(0, 10) },
-      { h: 'Event', v: (r) => r.event_title },
-      { h: 'Name', v: (r) => r.name },
-      { h: 'Email', v: (r) => r.email },
-      { h: 'Phone', v: (r) => r.phone },
-      { h: 'Church', v: (r) => r.church },
-    ],
-    fields: [],
   },
   gallery: {
-    title: 'Gallery', single: 'Photo', path: '/gallery/', noEdit: true, multipart: true,
+    title: 'Gallery', single: 'Photo', path: '/gallery/',
     cols: [
-      { h: 'Photo', html: true, v: (r) => `<img src="${esc(r.url)}" alt="" style="height:42px;border-radius:6px">` },
-      { h: 'Title', v: (r) => r.title },
-      { h: 'Caption', v: (r) => r.caption },
+      { h: 'Photo', v: (r) => r.image_url, img: true },
+      { h: 'Description', v: (r) => r.description },
+      { h: 'Added', v: (r) => (r.created_at || '').slice(0, 10) },
     ],
     fields: [
-      { n: 'title', l: 'Title', req: true, full: true },
-      { n: 'caption', l: 'Caption', full: true },
-      { n: 'file', l: 'Image (JPG, PNG or WEBP, max 5MB)', t: 'file', req: true, full: true },
+      { n: 'image_url', l: 'Photo', t: 'image', req: true, full: true },
+      { n: 'description', l: 'Short description', max: 150, full: true },
     ],
-  },
-  gifts: {
-    title: 'Online Gifts', single: 'Gift', path: '/give/', noAdd: true, noEdit: true, noDelete: true,
-    cols: [
-      { h: 'Date', v: (r) => (r.created_at || '').slice(0, 10) },
-      { h: 'Name', v: (r) => r.name },
-      { h: 'Email', v: (r) => r.email },
-      { h: 'Amount', v: (r) => money(r.amount, r.currency) },
-      { h: 'Purpose', v: (r) => r.purpose },
-      { h: 'Status', v: (r) => r.status, badge: true },
-    ],
-    fields: [],
   },
   messages: {
     title: 'Messages', single: 'Message', path: '/contact/', search: true, noAdd: true, noEdit: true, viewer: true,
@@ -234,8 +189,8 @@ $('#nav').addEventListener('click', (e) => { const b = e.target.closest('button'
 
 function go(view) {
   document.querySelectorAll('#nav button').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
-  $('#page-title').textContent = view === 'dashboard' ? 'Dashboard' : view === 'reports' ? 'Reports' : ENT[view].title;
-  const run = view === 'dashboard' ? renderDashboard() : view === 'reports' ? renderReports() : renderList(view);
+  $('#page-title').textContent = view === 'dashboard' ? 'Dashboard' : ENT[view].title;
+  const run = view === 'dashboard' ? renderDashboard() : renderList(view);
   run.catch((err) => toast(err.message, true));
 }
 
@@ -264,35 +219,6 @@ async function renderDashboard() {
         ${donations.length ? `<table>${donations.map((d) => `<tr><td>${esc(d.date_received)}</td><td>${esc(donorMap[d.donor_id] || '#' + d.donor_id)}</td><td><b>${esc(money(d.amount, d.currency))}</b></td></tr>`).join('')}</table>` : '<div class="empty">No donations yet</div>'}
       </div>
     </div>`;
-}
-
-async function renderReports() {
-  const r = await api('/reports/summary');
-  const table = (rows, cols) => (rows.length
-    ? `<table><thead><tr>${cols.map((c) => `<th>${c[0]}</th>`).join('')}</tr></thead><tbody>${rows.map((x) => `<tr>${cols.map((c) => `<td>${esc(c[1](x))}</td>`).join('')}</tr>`).join('')}</tbody></table>`
-    : '<div class="empty">No data yet</div>');
-  $('#content').innerHTML = `
-    <div class="toolbar"><span class="spacer"></span>
-      <button class="btn" id="print">Print report</button>
-      <button class="btn primary" id="backup">Download backup</button></div>
-    <div class="two">
-      <div class="panel"><h2>Donations by month</h2>${table(r.donations_by_month, [['Month', (x) => x.month], ['Gifts', (x) => x.count], ['Total', (x) => money(x.total)]])}</div>
-      <div class="panel"><h2>Top donors</h2>${table(r.top_donors, [['Donor', (x) => x.name], ['Total given', (x) => money(x.total)]])}</div>
-      <div class="panel"><h2>Staff by department</h2>${table(r.staff_by_department, [['Department', (x) => label(x.department)], ['Staff', (x) => x.count]])}</div>
-      <div class="panel"><h2>Members by type</h2>${table(r.members_by_type, [['Type', (x) => label(x.member_type)], ['People', (x) => x.count]])}</div>
-    </div>`;
-  $('#print').onclick = () => window.print();
-  $('#backup').onclick = downloadBackup;
-}
-
-async function downloadBackup() {
-  try {
-    const res = await fetch('/reports/backup', { headers: { Authorization: `Bearer ${token}` } });
-    if (!res.ok) throw new Error('Backup failed');
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(await res.blob());
-    a.download = `ice-backup-${new Date().toISOString().slice(0, 10)}.json`; a.click(); URL.revokeObjectURL(a.href);
-  } catch (err) { toast(err.message, true); }
 }
 
 async function loadDonors() {
@@ -329,7 +255,7 @@ async function refresh() {
   const q = $('#q')?.value.trim(); if (q) params.set('q', q);
   const f = $('#flt')?.value; if (f) params.set(e.filter.param, f);
   if (key === 'donations') await loadDonors();
-  current.rows = await api(`${e.listPath || e.path}?${params}`);
+  current.rows = await api(`${e.path}?${params}`);
   drawTable();
 }
 
@@ -339,11 +265,12 @@ function drawTable() {
   $('#table').innerHTML = `<table><thead><tr>${e.cols.map((c) => `<th>${c.h}</th>`).join('')}<th></th></tr></thead><tbody>
     ${rows.map((r) => `<tr>${e.cols.map((c) => {
       const v = c.v(r);
-      return `<td>${c.html ? v : c.badge ? `<span class="badge ${esc(v)}">${esc(label(v))}</span>` : esc(v)}</td>`;
+      if (c.img) return `<td>${v ? `<img class="thumb-sm" src="${esc(v)}" alt="">` : ''}</td>`;
+      return `<td>${c.badge ? `<span class="badge ${esc(v)}">${esc(label(v))}</span>` : esc(v)}</td>`;
     }).join('')}<td class="actions">
       ${e.viewer ? `<button class="btn sm" data-view="${r.id}">View</button>` : ''}
       ${e.noEdit ? '' : `<button class="btn sm" data-edit="${r.id}">Edit</button>`}
-      ${e.noDelete ? '' : `<button class="btn sm danger" data-del="${r.id}">Delete</button>`}</td></tr>`).join('')}
+      <button class="btn sm danger" data-del="${r.id}">Delete</button></td></tr>`).join('')}
   </tbody></table>`;
   $('#table').onclick = (ev) => {
     const ed = ev.target.closest('[data-edit]'); const del = ev.target.closest('[data-del]');
@@ -385,28 +312,40 @@ async function openForm(key, row = null) {
     const req = f.req ? 'required' : '';
     if (f.t === 'select') return `<select name="${f.n}" ${req}><option value=""></option>${f.o.map((o) => `<option value="${o}" ${o === val ? 'selected' : ''}>${esc(label(o))}</option>`).join('')}</select>`;
     if (f.t === 'donor') return `<select name="${f.n}" ${req}><option value=""></option>${Object.entries(donorMap).map(([id, n]) => `<option value="${id}" ${id == val ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>`;
-    if (f.t === 'checkbox') return `<input name="${f.n}" type="checkbox" ${(row ? row[f.n] : f.d) ? 'checked' : ''} style="width:auto">`;
-    if (f.t === 'file') return `<input name="${f.n}" type="file" accept="image/jpeg,image/png,image/webp" ${req}>`;
+    if (f.t === 'image') return `<input type="hidden" name="${f.n}" value="${esc(val)}"><input type="file" accept="image/jpeg,image/png,image/webp" data-upload="${f.n}"><img class="thumb" data-preview="${f.n}" ${val ? `src="${esc(val)}"` : 'hidden'}><span class="muted small" data-status="${f.n}"></span>`;
     if (f.t === 'textarea') return `<textarea name="${f.n}" rows="3">${esc(val)}</textarea>`;
-    return `<input name="${f.n}" type="${f.t || 'text'}" value="${esc(val)}" ${f.t === 'number' ? 'step="0.01" min="0.01"' : ''} ${req}>`;
+    return `<input name="${f.n}" type="${f.t || 'text'}" value="${esc(val)}" ${f.max ? `maxlength="${f.max}"` : ''} ${f.t === 'number' ? 'step="0.01" min="0.01"' : ''} ${req}>`;
   };
   const m = $('#modal');
   m.innerHTML = `<form id="rec-form"><h2>${row ? 'Edit' : 'Add'} ${e.single}</h2>
     <div class="form-grid">${e.fields.map((f) => `<label class="${f.full ? 'full' : ''}">${f.l}${f.req ? ' *' : ''}${input(f)}</label>`).join('')}</div>
     <div class="form-actions"><button type="button" class="btn" id="cancel">Cancel</button><button class="btn primary" type="submit">Save</button></div></form>`;
   $('#cancel').onclick = () => m.close();
+  m.querySelectorAll('[data-upload]').forEach((inp) => inp.addEventListener('change', async () => {
+    const name = inp.dataset.upload; const file = inp.files[0];
+    if (!file) return;
+    const status = m.querySelector(`[data-status="${name}"]`);
+    status.textContent = 'Uploading...';
+    try {
+      const fd = new FormData(); fd.append('file', file);
+      const res = await api('/uploads/', { method: 'POST', form: fd });
+      m.querySelector(`input[name="${name}"]`).value = res.url;
+      const img = m.querySelector(`[data-preview="${name}"]`); img.src = res.url; img.hidden = false;
+      status.textContent = 'Uploaded. Click Save to keep it.';
+    } catch (err) { status.textContent = ''; toast(err.message, true); }
+  }));
   $('#rec-form').onsubmit = async (ev) => {
     ev.preventDefault();
     const fd = new FormData(ev.target); const body = {};
     e.fields.forEach((f) => {
-      if (f.t === 'checkbox') { body[f.n] = fd.get(f.n) !== null; return; }
       let v = fd.get(f.n); v = v === '' ? null : v;
       if (v !== null && f.t === 'number') v = Number(v);
       if (v !== null && f.t === 'donor') v = Number(v);
       body[f.n] = v;
     });
+    if (e.fields.some((f) => f.t === 'image' && f.req && !body[f.n])) return toast('Please upload a photo first', true);
     try {
-      await api(row ? `${e.path}${row.id}` : e.path, e.multipart ? { method: 'POST', form: fd } : { method: row ? 'PUT' : 'POST', json: body });
+      await api(row ? `${e.path}${row.id}` : e.path, { method: row ? 'PUT' : 'POST', json: body });
       m.close(); toast('Saved'); await refresh();
     } catch (err) { toast(err.message, true); }
   };

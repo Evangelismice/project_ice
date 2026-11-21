@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -8,23 +8,11 @@ from ..models.events import Event
 from ..schemas.events import EventCreate, EventUpdate, EventResponse
 from ..auth.jwt import get_current_user
 
-router = APIRouter(prefix='/events', tags=['Events'])
+router = APIRouter(prefix='/events', tags=['Events'], dependencies=[Depends(get_current_user)])
+public_router = APIRouter(prefix='/public', tags=['Public'])
 
 
-@router.get('/', response_model=List[EventResponse])
-def upcoming_events(db: Session = Depends(get_db)):
-    """Public: published events from today onwards."""
-    return (db.query(Event).filter(Event.is_published == True, Event.event_date >= date.today())  # noqa: E712
-            .order_by(Event.event_date).all())
-
-
-@router.get('/manage', response_model=List[EventResponse], dependencies=[Depends(get_current_user)])
-def all_events(db: Session = Depends(get_db)):
-    return db.query(Event).order_by(Event.event_date.desc()).all()
-
-
-@router.post('/', response_model=EventResponse, status_code=status.HTTP_201_CREATED,
-             dependencies=[Depends(get_current_user)])
+@router.post('/', response_model=EventResponse, status_code=status.HTTP_201_CREATED)
 def create_event(data: EventCreate, db: Session = Depends(get_db)):
     event = Event(**data.model_dump())
     db.add(event)
@@ -33,7 +21,15 @@ def create_event(data: EventCreate, db: Session = Depends(get_db)):
     return event
 
 
-@router.put('/{event_id}', response_model=EventResponse, dependencies=[Depends(get_current_user)])
+@router.get('/', response_model=List[EventResponse])
+def list_events(q: Optional[str] = None, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    query = db.query(Event)
+    if q:
+        query = query.filter(Event.title.ilike(f'%{q}%'))
+    return query.order_by(Event.event_date.desc()).offset(skip).limit(limit).all()
+
+
+@router.put('/{event_id}', response_model=EventResponse)
 def update_event(event_id: int, data: EventUpdate, db: Session = Depends(get_db)):
     event = db.query(Event).filter(Event.id == event_id).first()
     if not event:
@@ -45,10 +41,17 @@ def update_event(event_id: int, data: EventUpdate, db: Session = Depends(get_db)
     return event
 
 
-@router.delete('/{event_id}', status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(get_current_user)])
+@router.delete('/{event_id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_event(event_id: int, db: Session = Depends(get_db)):
     event = db.query(Event).filter(Event.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail='Event not found')
     db.delete(event)
     db.commit()
+
+
+@public_router.get('/events', response_model=List[EventResponse])
+def upcoming_events(limit: int = 12, db: Session = Depends(get_db)):
+    """Public list for the website: upcoming events only."""
+    return (db.query(Event).filter(Event.event_date >= date.today())
+            .order_by(Event.event_date).limit(limit).all())
