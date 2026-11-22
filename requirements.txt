@@ -9,4 +9,4 @@ email-validator
 pymysql
 cryptography
 httpx
-cloudinaryhttpx
+cloudinary
