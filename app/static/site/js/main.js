@@ -98,7 +98,7 @@ async function initGallery() {
     const items = await http.get('/public/gallery?limit=50');
     const card = (i) => {
       const cap = i.description ? `<figcaption>${esc(i.description)}</figcaption>` : '';
-      if (i.resource_type === 'video' && i.video_url) {
+      if (i.video_url) {
         return `<figure><video src="${esc(i.video_url)}" controls preload="metadata" playsinline></video>${cap}</figure>`;
       }
       if (!i.image_url) return '';

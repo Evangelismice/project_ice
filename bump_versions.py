@@ -13,11 +13,11 @@ SITE = Path("app/static/site")
 ADMIN_INDEX = Path("app/static/admin/index.html")
 
 SITE_RULES = [
-    (re.compile(r'js/main\.js(\?v=\d+)?"'), 'js/main.js?v=3"'),
+    (re.compile(r'js/main\.js(\?v=\d+)?"'), 'js/main.js?v=4"'),
     (re.compile(r'css/style\.css(\?v=\d+)?"'), 'css/style.css?v=2"'),
 ]
 ADMIN_RULES = [
-    (re.compile(r'app\.js(\?v=\d+)?"'), 'app.js?v=3"'),
+    (re.compile(r'app\.js(\?v=\d+)?"'), 'app.js?v=4"'),
 ]
 
 

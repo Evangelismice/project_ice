@@ -120,7 +120,6 @@ const ENT = {
       { h: "Added", v: (r) => (r.created_at || "").slice(0, 10) },
     ],
     fields: [
-      { n: 'resource_type', l: 'Type', t: 'select', o: ['image', 'video'], req: true, d: 'image' },
       { n: 'image_url', l: 'Photo', t: 'image', full: true },
       { n: 'video_url', l: 'Video (MP4, MOV or AVI, up to 50 MB)', t: 'video', full: true },
       { n: 'description', l: 'Description', full: true },
@@ -350,8 +349,9 @@ async function openForm(key, row = null) {
     });
     if (e.fields.some((f) => f.t === 'image' && f.req && !body[f.n])) return toast('Please upload a photo first', true);
     if (e === ENT.gallery) {
-      if (body.resource_type === 'video' && !body.video_url) return toast('Please upload a video first', true);
-      if (body.resource_type !== 'video' && !body.image_url) return toast('Please upload a photo first', true);
+      if (body.video_url) { body.resource_type = 'video'; body.image_url = null; }
+      else if (body.image_url) { body.resource_type = 'image'; }
+      else return toast('Please upload a photo or a video first', true);
     }
     try {
       await api(row ? `${e.path}${row.id}` : e.path, { method: row ? 'PUT' : 'POST', json: body });
