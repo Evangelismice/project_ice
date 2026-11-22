@@ -111,16 +111,19 @@ const ENT = {
     ],
   },
   gallery: {
-    title: 'Gallery', single: 'Photo', path: '/gallery/',
+    title: 'Gallery', single: 'Media', path: '/gallery/', search: true,
+    filter: { param: 'resource_type', label: 'All types', options: ['image', 'video'] },
     cols: [
-      { h: 'Photo', v: (r) => r.image_url, img: true },
-      { h: 'Description', v: (r) => r.description },
-      { h: 'Added', v: (r) => (r.created_at || '').slice(0, 10) },
+      { h: "Type", v: (r) => label(r.resource_type) },
+      { h: "Media", v: (r) => r.image_url || r.video_url ? (r.video_url || r.image_url) : "—" },
+      { h: "Description", v: (r) => r.description },
+      { h: "Added", v: (r) => (r.created_at || "").slice(0, 10) },
     ],
     fields: [
-      { n: 'image_url', l: 'Photo', t: 'image', req: true, full: true },
-      { n: 'description', l: 'Short description', max: 150, full: true },
-    ],
+      { n: 'resource_type', l: 'Type', t: 'select', o: ['image', 'video'], req: true, d: 'image' },
+      { n: 'image_url', l: 'Image URL', t: 'image', full: true },
+      { n: 'video_url', l: 'Video URL', t: 'url', full: true },
+      { n: 'description', l: 'Description', full: true },
   },
   messages: {
     title: 'Messages', single: 'Message', path: '/contact/', search: true, noAdd: true, noEdit: true, viewer: true,
