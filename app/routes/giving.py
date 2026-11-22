@@ -64,7 +64,7 @@ def verify(reference: str, db: Session = Depends(get_db)):
             db.flush()
         db.add(Donation(
             donor_id=donor.id, amount=gift.amount, currency=gift.currency,
-            purpose=gift.purpose or 'Online gift', payment_method=PaymentMethod.manual,
+            purpose=gift.purpose or 'Online gift', payment_method=PaymentMethod.bank_transfer,
             date_received=date.today()))
         gift.paid_at = datetime.now(timezone.utc)
         db.commit()

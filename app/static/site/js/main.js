@@ -130,9 +130,14 @@ function initGive() {
     const amountVal = Number(amount.value);
     if (amountVal < 100) { note.textContent = 'Minimum amount is &#8358;100'; return; }
 
-    // Show popup with account details and receipt upload
-    const reference = `ICE-${Date.now()}`;
-    createPopup(amountVal, reference, form);
+    try {
+      const d = await http.post('/give/initialize', {
+        name: form.name.value, email: form.email.value, amount: amountVal, purpose: form.purpose.value || null,
+      });
+      createPopup(amountVal, d.reference, form);
+    } catch (err) {
+      note.textContent = 'We could not start your gift. Please check your details and try again.';
+    }
   });
 }
 
@@ -220,12 +225,7 @@ function createPopup(amountVal, reference, form) {
         document.body.removeChild(popup);
       }
     } catch (err) {
-      // In manual mode, still mark as success
-      const banner = $('#give-banner');
-      if (banner) {
-        banner.hidden = false; banner.className = 'alert good'; banner.textContent = 'Thank you! Your gift has been received. God bless you.';
-      }
-      note.textContent = 'Thank you for your donation!';
+      note.textContent = 'We could not confirm your gift. Please try again or contact us.';
       document.body.removeChild(popup);
     }
   };
