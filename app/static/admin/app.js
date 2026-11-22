@@ -121,8 +121,8 @@ const ENT = {
     ],
     fields: [
       { n: 'resource_type', l: 'Type', t: 'select', o: ['image', 'video'], req: true, d: 'image' },
-      { n: 'image_url', l: 'Image URL', t: 'image', full: true },
-      { n: 'video_url', l: 'Video URL', t: 'image', full: true },
+      { n: 'image_url', l: 'Photo', t: 'image', full: true },
+      { n: 'video_url', l: 'Video (MP4, MOV or AVI, up to 50 MB)', t: 'video', full: true },
       { n: 'description', l: 'Description', full: true },
     ],
   },
@@ -316,7 +316,8 @@ async function openForm(key, row = null) {
     const req = f.req ? 'required' : '';
     if (f.t === 'select') return `<select name="${f.n}" ${req}><option value=""></option>${f.o.map((o) => `<option value="${o}" ${o === val ? 'selected' : ''}>${esc(label(o))}</option>`).join('')}</select>`;
     if (f.t === 'donor') return `<select name="${f.n}" ${req}><option value=""></option>${Object.entries(donorMap).map(([id, n]) => `<option value="${id}" ${id == val ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>`;
-    if (f.t === 'image') return `<input type="hidden" name="${f.n}" value="${esc(val)}"><input type="file" accept="image/jpeg,image/png,image/webp" data-upload="${f.n}"><img class="thumb" data-preview="${f.n}" ${val ? `src="${esc(val)}"` : 'hidden'}><span class="muted small" data-status="${f.n}"></span>`;
+    if (f.t === 'image') return `<input type="hidden" name="${f.n}" value="${esc(val)}"><input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/x-msvideo" data-upload="${f.n}"><img class="thumb" data-preview="${f.n}" ${val ? `src="${esc(val)}"` : 'hidden'}><span class="muted small" data-status="${f.n}"></span>`;
+    if (f.t === 'video') return `<input type="hidden" name="${f.n}" value="${esc(val)}"><input type="file" accept="video/mp4,video/quicktime,video/x-msvideo" data-upload="${f.n}"><video class="thumb" data-preview="${f.n}" controls preload="metadata" ${val ? `src="${esc(val)}"` : 'hidden'}></video><span class="muted small" data-status="${f.n}"></span>`;
     if (f.t === 'textarea') return `<textarea name="${f.n}" rows="3">${esc(val)}</textarea>`;
     return `<input name="${f.n}" type="${f.t || 'text'}" value="${esc(val)}" ${f.max ? `maxlength="${f.max}"` : ''} ${f.t === 'number' ? 'step="0.01" min="0.01"' : ''} ${req}>`;
   };
@@ -348,6 +349,10 @@ async function openForm(key, row = null) {
       body[f.n] = v;
     });
     if (e.fields.some((f) => f.t === 'image' && f.req && !body[f.n])) return toast('Please upload a photo first', true);
+    if (e === ENT.gallery) {
+      if (body.resource_type === 'video' && !body.video_url) return toast('Please upload a video first', true);
+      if (body.resource_type !== 'video' && !body.image_url) return toast('Please upload a photo first', true);
+    }
     try {
       await api(row ? `${e.path}${row.id}` : e.path, { method: row ? 'PUT' : 'POST', json: body });
       m.close(); toast('Saved'); await refresh();

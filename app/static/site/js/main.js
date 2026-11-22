@@ -96,9 +96,15 @@ async function initGallery() {
   const box = $('#gallery');
   try {
     const items = await http.get('/public/gallery?limit=50');
-    box.innerHTML = items.length
-      ? items.map((i) => `<figure><img src="${esc(i.image_url.replace('/upload/', '/upload/w_700,q_auto,f_auto/'))}" alt="${esc(i.description || 'ICE gallery photo')}" loading="lazy">${i.description ? `<figcaption>${esc(i.description)}</figcaption>` : ''}</figure>`).join('')
-      : '<p class="muted">Photos will be added soon.</p>';
+    const card = (i) => {
+      const cap = i.description ? `<figcaption>${esc(i.description)}</figcaption>` : '';
+      if (i.resource_type === 'video' && i.video_url) {
+        return `<figure><video src="${esc(i.video_url)}" controls preload="metadata" playsinline></video>${cap}</figure>`;
+      }
+      if (!i.image_url) return '';
+      return `<figure><img src="${esc(i.image_url.replace('/upload/', '/upload/w_700,q_auto,f_auto/'))}" alt="${esc(i.description || 'ICE gallery photo')}" loading="lazy">${cap}</figure>`;
+    };
+    box.innerHTML = items.length ? items.map(card).join('') : '<p class="muted">Photos and videos will be added soon.</p>';
   } catch { box.innerHTML = '<p class="muted">The gallery could not be loaded.</p>'; }
 }
 

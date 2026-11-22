@@ -1,0 +1,69 @@
+diff --git a/app/static/admin/app.js b/app/static/admin/app.js
+index 7cdebab..2085ed2 100644
+--- a/app/static/admin/app.js
++++ b/app/static/admin/app.js
+@@ -121,8 +121,8 @@ const ENT = {
+     ],
+     fields: [
+       { n: 'resource_type', l: 'Type', t: 'select', o: ['image', 'video'], req: true, d: 'image' },
+-      { n: 'image_url', l: 'Image URL', t: 'image', full: true },
+-      { n: 'video_url', l: 'Video URL', t: 'image', full: true },
++      { n: 'image_url', l: 'Photo', t: 'image', full: true },
++      { n: 'video_url', l: 'Video (MP4, MOV or AVI, up to 50 MB)', t: 'video', full: true },
+       { n: 'description', l: 'Description', full: true },
+     ],
+   },
+@@ -317,6 +317,7 @@ async function openForm(key, row = null) {
+     if (f.t === 'select') return `<select name="${f.n}" ${req}><option value=""></option>${f.o.map((o) => `<option value="${o}" ${o === val ? 'selected' : ''}>${esc(label(o))}</option>`).join('')}</select>`;
+     if (f.t === 'donor') return `<select name="${f.n}" ${req}><option value=""></option>${Object.entries(donorMap).map(([id, n]) => `<option value="${id}" ${id == val ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>`;
+     if (f.t === 'image') return `<input type="hidden" name="${f.n}" value="${esc(val)}"><input type="file" accept="image/jpeg,image/png,image/webp" data-upload="${f.n}"><img class="thumb" data-preview="${f.n}" ${val ? `src="${esc(val)}"` : 'hidden'}><span class="muted small" data-status="${f.n}"></span>`;
++    if (f.t === 'video') return `<input type="hidden" name="${f.n}" value="${esc(val)}"><input type="file" accept="video/mp4,video/quicktime,video/x-msvideo" data-upload="${f.n}"><video class="thumb" data-preview="${f.n}" controls preload="metadata" ${val ? `src="${esc(val)}"` : 'hidden'}></video><span class="muted small" data-status="${f.n}"></span>`;
+     if (f.t === 'textarea') return `<textarea name="${f.n}" rows="3">${esc(val)}</textarea>`;
+     return `<input name="${f.n}" type="${f.t || 'text'}" value="${esc(val)}" ${f.max ? `maxlength="${f.max}"` : ''} ${f.t === 'number' ? 'step="0.01" min="0.01"' : ''} ${req}>`;
+   };
+@@ -348,6 +349,10 @@ async function openForm(key, row = null) {
+       body[f.n] = v;
+     });
+     if (e.fields.some((f) => f.t === 'image' && f.req && !body[f.n])) return toast('Please upload a photo first', true);
++    if (e === ENT.gallery) {
++      if (body.resource_type === 'video' && !body.video_url) return toast('Please upload a video first', true);
++      if (body.resource_type !== 'video' && !body.image_url) return toast('Please upload a photo first', true);
++    }
+     try {
+       await api(row ? `${e.path}${row.id}` : e.path, { method: row ? 'PUT' : 'POST', json: body });
+       m.close(); toast('Saved'); await refresh();
+diff --git a/app/static/site/css/style.css b/app/static/site/css/style.css
+index c508521..c1db17b 100644
+--- a/app/static/site/css/style.css
++++ b/app/static/site/css/style.css
+@@ -79,7 +79,7 @@ nav a.on:not(.btn){color:var(--red)}
+ .event h3{margin:0 0 .2rem}.event p{margin:0;color:var(--muted)}.event .meta{font-size:.9rem;font-weight:600;color:var(--navy)}
+ .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem}
+ .gallery figure{margin:0;border-radius:12px;overflow:hidden;background:#fff;border:1px solid var(--line)}
+-.gallery img{width:100%;aspect-ratio:4/3;object-fit:cover}.gallery figcaption{padding:.6rem .9rem;font-size:.9rem;color:var(--muted)}
++.gallery img,.gallery video{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#000}.gallery figcaption{padding:.6rem .9rem;font-size:.9rem;color:var(--muted)}
+ .chips{display:flex;flex-wrap:wrap;gap:.6rem}
+ .chip{border:2px solid var(--line);background:#fff;border-radius:99px;padding:.45rem 1.1rem;cursor:pointer;font:inherit;font-weight:700;color:var(--navy)}.chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+ .alert{padding:1rem 1.2rem;border-radius:10px;background:#e8f5ee;color:#175c3a;font-weight:600;margin-bottom:1.2rem}.alert.bad{background:#fbe9e7;color:#8c2316}
+diff --git a/app/static/site/js/main.js b/app/static/site/js/main.js
+index f011f21..23bef52 100644
+--- a/app/static/site/js/main.js
++++ b/app/static/site/js/main.js
+@@ -96,9 +96,15 @@ async function initGallery() {
+   const box = $('#gallery');
+   try {
+     const items = await http.get('/public/gallery?limit=50');
+-    box.innerHTML = items.length
+-      ? items.map((i) => `<figure><img src="${esc(i.image_url.replace('/upload/', '/upload/w_700,q_auto,f_auto/'))}" alt="${esc(i.description || 'ICE gallery photo')}" loading="lazy">${i.description ? `<figcaption>${esc(i.description)}</figcaption>` : ''}</figure>`).join('')
+-      : '<p class="muted">Photos will be added soon.</p>';
++    const card = (i) => {
++      const cap = i.description ? `<figcaption>${esc(i.description)}</figcaption>` : '';
++      if (i.resource_type === 'video' && i.video_url) {
++        return `<figure><video src="${esc(i.video_url)}" controls preload="metadata" playsinline></video>${cap}</figure>`;
++      }
++      if (!i.image_url) return '';
++      return `<figure><img src="${esc(i.image_url.replace('/upload/', '/upload/w_700,q_auto,f_auto/'))}" alt="${esc(i.description || 'ICE gallery photo')}" loading="lazy">${cap}</figure>`;
++    };
++    box.innerHTML = items.length ? items.map(card).join('') : '<p class="muted">Photos and videos will be added soon.</p>';
+   } catch { box.innerHTML = '<p class="muted">The gallery could not be loaded.</p>'; }
+}
