@@ -1,6 +1,6 @@
 // ICE public website: shared header/footer plus small page modules (events, gallery, giving, forms).
 const $ = (s, el = document) => el.querySelector(s);
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const esc = (s) => { const t = String(s ?? ''); return t.replace(/[&<>"']/g, (c) => { const m = { '&':'&','<':'<','>':'>','"':'"' }; return m[c] || c; }); };
 const page = document.body.dataset.page;
 
 const NAV = [['home','index.html','Home'],['about','about.html','About'],['ministries','ministries.html','Ministries'],
@@ -92,52 +92,14 @@ async function initEvents() {
   bindForm(form, note, '/registrations/', () => ({ event_id: Number($('#reg-event-id').value) }), 'You are registered. God bless you!');
 }
 
-// Opens a video in a large viewer and carries on from where the small player was.
-function openVideo(src, caption, startAt = 0) {
-  let dlg = $('#video-dialog');
-  if (!dlg) {
-    dlg = document.createElement('dialog');
-    dlg.id = 'video-dialog';
-    dlg.className = 'video-dialog';
-    dlg.innerHTML = '<button type="button" class="vd-close" aria-label="Close">&times;</button><video controls playsinline></video><p class="vd-cap"></p>';
-    document.body.appendChild(dlg);
-    const v = dlg.querySelector('video');
-    dlg.querySelector('.vd-close').addEventListener('click', () => dlg.close());
-    dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
-    dlg.addEventListener('close', () => { v.pause(); v.removeAttribute('src'); v.load(); });
-  }
-  const v = dlg.querySelector('video');
-  dlg.querySelector('.vd-cap').textContent = caption || '';
-  v.addEventListener('loadedmetadata', () => { v.currentTime = startAt; v.play().catch(() => {}); }, { once: true });
-  v.src = src;
-  dlg.showModal();
-}
-
 async function initGallery() {
   const box = $('#gallery');
   try {
     const items = await http.get('/public/gallery?limit=50');
     box.innerHTML = items.length
-      ? items.map((i) => {
-          const isVideo = i.media_type === 'video' || i.image_url.includes('/video/upload/');
-          const description = i.description || (isVideo ? 'ICE gallery video' : 'ICE gallery photo');
-          const media = isVideo
-            ? `<div class="vwrap"><video src="${esc(i.image_url)}" poster="${esc(i.image_url.replace('/video/upload/', '/video/upload/so_0,w_700,q_auto/').replace(/\.[a-z0-9]+$/i, '.jpg'))}" controls preload="none" playsinline aria-label="${esc(description)}"></video><button type="button" class="expand" data-expand title="Expand video" aria-label="Expand video">&#10530; Expand</button></div>`
-            : `<img src="${esc(i.image_url.replace('/upload/', '/upload/w_700,q_auto,f_auto/'))}" alt="${esc(description)}" loading="lazy">`;
-          return `<figure>${media}${i.description ? `<figcaption>${esc(i.description)}</figcaption>` : ''}</figure>`;
-        }).join('')
-      : '<p class="muted">Photos and videos will be added soon.</p>';
+      ? items.map((i) => `<figure><img src="${esc(i.image_url.replace('/upload/', '/upload/w_700,q_auto,f_auto/'))}" alt="${esc(i.description || 'ICE gallery photo')}" loading="lazy">${i.description ? `<figcaption>${esc(i.description)}</figcaption>` : ''}</figure>`).join('')
+      : '<p class="muted">Photos will be added soon.</p>';
   } catch { box.innerHTML = '<p class="muted">The gallery could not be loaded.</p>'; }
-
-  box.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-expand]');
-    if (!b) return;
-    const fig = b.closest('figure');
-    const vid = fig.querySelector('video');
-    const at = vid.currentTime;
-    vid.pause();
-    openVideo(vid.getAttribute('src'), fig.querySelector('figcaption')?.textContent || '', at);
-  });
 }
 
 function initContact() { bindForm($('#contact-form'), $('#form-note'), '/contact/'); }
@@ -166,7 +128,7 @@ function initGive() {
     note.textContent = '';
 
     const amountVal = Number(amount.value);
-    if (amountVal < 100) { note.textContent = 'Minimum amount is \u20A6100'; return; }
+    if (amountVal < 100) { note.textContent = 'Minimum amount is &#8358;100'; return; }
 
     try {
       const d = await http.post('/give/initialize', {

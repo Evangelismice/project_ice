@@ -111,16 +111,14 @@ const ENT = {
     ],
   },
   gallery: {
-    title: 'Gallery', single: 'Gallery item', path: '/gallery/',
+    title: 'Gallery', single: 'Photo', path: '/gallery/',
     cols: [
-      { h: 'Media', v: (r) => r.image_url, img: (r) => r.media_type !== 'video' },
-      { h: 'Type', v: (r) => r.media_type || 'image' },
+      { h: 'Photo', v: (r) => r.image_url, img: true },
       { h: 'Description', v: (r) => r.description },
       { h: 'Added', v: (r) => (r.created_at || '').slice(0, 10) },
     ],
     fields: [
-      { n: 'image_url', l: 'Photo or video', t: 'media', req: true, full: true },
-      { n: 'media_type', l: 'Media type', t: 'select', o: ['image', 'video'], req: true, d: 'image', full: true },
+      { n: 'image_url', l: 'Photo', t: 'image', req: true, full: true },
       { n: 'description', l: 'Short description', max: 150, full: true },
     ],
   },
@@ -241,14 +239,10 @@ async function renderList(key) {
       ${e.filter ? `<select id="flt"><option value="">${e.filter.label}</option>${e.filter.options.map((o) => `<option value="${o}">${esc(label(o))}</option>`).join('')}</select>` : ''}
       <span class="spacer"></span>
       <button class="btn" id="export">Export CSV</button>
-      ${e.noAdd ? '' : (key === 'gallery'
-        ? '<button class="btn primary" id="add-photo">+ Add Photo</button><button class="btn primary" id="add-video">+ Add Video</button>'
-        : `<button class="btn primary" id="add">+ Add ${e.single}</button>`)}
+      ${e.noAdd ? '' : `<button class="btn primary" id="add">+ Add ${e.single}</button>`}
     </div>
     <div class="table-wrap" id="table"></div>`;
   if ($('#add')) $('#add').onclick = () => openForm(key);
-  if ($('#add-photo')) $('#add-photo').onclick = () => openForm(key, null, 'image');
-  if ($('#add-video')) $('#add-video').onclick = () => openForm(key, null, 'video');
   $('#export').onclick = exportCsv;
   if ($('#q')) $('#q').oninput = debounce(refresh, 300);
   if ($('#flt')) $('#flt').onchange = refresh;
@@ -271,7 +265,6 @@ function drawTable() {
   $('#table').innerHTML = `<table><thead><tr>${e.cols.map((c) => `<th>${c.h}</th>`).join('')}<th></th></tr></thead><tbody>
     ${rows.map((r) => `<tr>${e.cols.map((c) => {
       const v = c.v(r);
-      if (typeof c.img === 'function') { const showImage = c.img(r); return `<td>${showImage && v ? `<img class="thumb-sm" src="${esc(v)}" alt="">` : (r.media_type === 'video' ? 'Video' : '')}</td>`; }
       if (c.img) return `<td>${v ? `<img class="thumb-sm" src="${esc(v)}" alt="">` : ''}</td>`;
       return `<td>${c.badge ? `<span class="badge ${esc(v)}">${esc(label(v))}</span>` : esc(v)}</td>`;
     }).join('')}<td class="actions">
@@ -311,17 +304,15 @@ async function openMessage(r) {
 }
 
 // ---------- Form modal ----------
-async function openForm(key, row = null, presetMediaType = null) {
+async function openForm(key, row = null) {
   const e = ENT[key];
   if (key === 'donations') await loadDonors();
   const input = (f) => {
-    let val = row ? row[f.n] ?? '' : f.d ?? '';
-    if (presetMediaType && f.n === 'media_type') val = presetMediaType;
+    const val = row ? row[f.n] ?? '' : f.d ?? '';
     const req = f.req ? 'required' : '';
     if (f.t === 'select') return `<select name="${f.n}" ${req}><option value=""></option>${f.o.map((o) => `<option value="${o}" ${o === val ? 'selected' : ''}>${esc(label(o))}</option>`).join('')}</select>`;
     if (f.t === 'donor') return `<select name="${f.n}" ${req}><option value=""></option>${Object.entries(donorMap).map(([id, n]) => `<option value="${id}" ${id == val ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>`;
     if (f.t === 'image') return `<input type="hidden" name="${f.n}" value="${esc(val)}"><input type="file" accept="image/jpeg,image/png,image/webp" data-upload="${f.n}"><img class="thumb" data-preview="${f.n}" ${val ? `src="${esc(val)}"` : 'hidden'}><span class="muted small" data-status="${f.n}"></span>`;
-    if (f.t === 'media') return `<input type="hidden" name="${f.n}" value="${esc(val)}"><input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" data-upload="${f.n}"><div data-preview="${f.n}"></div><span class="muted small" data-status="${f.n}"></span>`;
     if (f.t === 'textarea') return `<textarea name="${f.n}" rows="3">${esc(val)}</textarea>`;
     return `<input name="${f.n}" type="${f.t || 'text'}" value="${esc(val)}" ${f.max ? `maxlength="${f.max}"` : ''} ${f.t === 'number' ? 'step="0.01" min="0.01"' : ''} ${req}>`;
   };
@@ -339,11 +330,7 @@ async function openForm(key, row = null, presetMediaType = null) {
       const fd = new FormData(); fd.append('file', file);
       const res = await api('/uploads/', { method: 'POST', form: fd });
       m.querySelector(`input[name="${name}"]`).value = res.url;
-      const preview = m.querySelector(`[data-preview="${name}"]`);
-      if (res.media_type === 'video') preview.innerHTML = `<video class="thumb" src="${esc(res.url)}" controls></video>`;
-      else preview.innerHTML = `<img class="thumb" src="${esc(res.url)}" alt="">`;
-      const typeSelect = m.querySelector('select[name="media_type"]');
-      if (typeSelect) typeSelect.value = res.media_type;
+      const img = m.querySelector(`[data-preview="${name}"]`); img.src = res.url; img.hidden = false;
       status.textContent = 'Uploaded. Click Save to keep it.';
     } catch (err) { status.textContent = ''; toast(err.message, true); }
   }));
@@ -356,7 +343,7 @@ async function openForm(key, row = null, presetMediaType = null) {
       if (v !== null && f.t === 'donor') v = Number(v);
       body[f.n] = v;
     });
-    if (e.fields.some((f) => (f.t === 'image' || f.t === 'media') && f.req && !body[f.n])) return toast('Please upload a photo or video first', true);
+    if (e.fields.some((f) => f.t === 'image' && f.req && !body[f.n])) return toast('Please upload a photo first', true);
     try {
       await api(row ? `${e.path}${row.id}` : e.path, { method: row ? 'PUT' : 'POST', json: body });
       m.close(); toast('Saved'); await refresh();

@@ -8,6 +8,5 @@ class GalleryImage(Base):
 
     id = Column(Integer, primary_key=True, nullable=False, index=True)
     image_url = Column(String(500), nullable=False)
-    media_type = Column(String(20), nullable=False, default='image')
     description = Column(String(150), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
