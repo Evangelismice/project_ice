@@ -122,7 +122,7 @@ const ENT = {
     fields: [
       { n: 'resource_type', l: 'Type', t: 'select', o: ['image', 'video'], req: true, d: 'image' },
       { n: 'image_url', l: 'Image URL', t: 'image', full: true },
-      { n: 'video_url', l: 'Video URL', t: 'url', full: true },
+      { n: 'video_url', l: 'Video URL', t: 'image', full: true },
       { n: 'description', l: 'Description', full: true },
     ],
   },
