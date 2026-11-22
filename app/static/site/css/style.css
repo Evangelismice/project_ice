@@ -79,7 +79,8 @@ nav a.on:not(.btn){color:var(--red)}
 .event h3{margin:0 0 .2rem}.event p{margin:0;color:var(--muted)}.event .meta{font-size:.9rem;font-weight:600;color:var(--navy)}
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem}
 .gallery figure{margin:0;border-radius:12px;overflow:hidden;background:#fff;border:1px solid var(--line)}
-.gallery img{width:100%;aspect-ratio:4/3;object-fit:cover}.gallery figcaption{padding:.6rem .9rem;font-size:.9rem;color:var(--muted)}
+.gallery img,.gallery video{width:100%;aspect-ratio:4/3;object-fit:cover}.gallery figcaption{padding:.6rem .9rem;font-size:.9rem;color:var(--muted)}
+.gallery video{display:block;background:#000}
 .chips{display:flex;flex-wrap:wrap;gap:.6rem}
 .chip{border:2px solid var(--line);background:#fff;border-radius:99px;padding:.45rem 1.1rem;cursor:pointer;font:inherit;font-weight:700;color:var(--navy)}.chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .alert{padding:1rem 1.2rem;border-radius:10px;background:#e8f5ee;color:#175c3a;font-weight:600;margin-bottom:1.2rem}.alert.bad{background:#fbe9e7;color:#8c2316}
@@ -93,3 +94,13 @@ dialog h3{margin-top:0}.row{display:flex;gap:.6rem;justify-content:flex-end;marg
 @media(max-width:860px){.event{grid-template-columns:70px 1fr}.event .btn{grid-column:1/-1}}
 .ev-img{width:100%;max-height:200px;object-fit:cover;border-radius:10px;margin-bottom:.7rem;display:block}
 .hint{display:block;font-size:.85rem;font-weight:400;color:var(--muted)}
+.gallery video{width:100%;display:block;background:#000}
+.vwrap{position:relative}
+.expand{position:absolute;top:.6rem;right:.6rem;border:0;border-radius:8px;background:rgba(0,0,0,.65);color:#fff;font:inherit;font-size:.8rem;font-weight:600;padding:.35rem .7rem;cursor:pointer}
+.expand:hover{background:rgba(0,0,0,.85)}
+.video-dialog{border:0;border-radius:14px;padding:0;width:min(1100px,96vw);background:#000;overflow:hidden}
+.video-dialog::backdrop{background:rgba(0,0,0,.85)}
+.video-dialog video{width:100%;max-height:82vh;display:block;background:#000}
+.vd-cap{margin:0;padding:.8rem 1.2rem;color:#d5def0;background:#0b1325;font-size:.95rem}
+.vd-cap:empty{display:none}
+.vd-close{position:absolute;top:.6rem;right:.6rem;z-index:2;width:38px;height:38px;border:0;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;font-size:1.4rem;cursor:pointer}
