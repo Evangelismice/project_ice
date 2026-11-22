@@ -6,7 +6,6 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
-      DATABASE_URL: sqlite:///./ice.db
       SECRET_KEY: change-this-to-a-long-random-string
       ACCESS_TOKEN_EXPIRE_MINUTES: "60"
       SITE_URL: https://ice-management.onrender.com

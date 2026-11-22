@@ -6,7 +6,7 @@ python-multipart
 python-jose
 bcrypt
 email-validator
-pymysql
+psycopg[binary]
 cryptography
 httpx
 cloudinary
