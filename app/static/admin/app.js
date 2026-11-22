@@ -124,6 +124,7 @@ const ENT = {
       { n: 'image_url', l: 'Image URL', t: 'image', full: true },
       { n: 'video_url', l: 'Video URL', t: 'url', full: true },
       { n: 'description', l: 'Description', full: true },
+    ],
   },
   messages: {
     title: 'Messages', single: 'Message', path: '/contact/', search: true, noAdd: true, noEdit: true, viewer: true,
