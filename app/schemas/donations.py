@@ -12,6 +12,7 @@ class DonationCreate(BaseModel):
     purpose: Optional[str] = None
     payment_method: PaymentMethod = PaymentMethod.cash
     date_received: date
+    receipt: Optional[str] = None
 
 
 class DonationResponse(DonationCreate):

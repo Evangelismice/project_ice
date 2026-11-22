@@ -24,3 +24,4 @@ class GiftResponse(BaseModel):
     status: str
     paid_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
+    receipt: Optional[str] = None

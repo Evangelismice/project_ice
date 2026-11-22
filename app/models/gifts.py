@@ -16,3 +16,4 @@ class OnlineGift(Base):
     status = Column(String(20), nullable=False, default='pending')
     paid_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    receipt = Column(String(255), nullable=True)  # path to receipt image

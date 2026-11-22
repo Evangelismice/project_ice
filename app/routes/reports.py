@@ -51,6 +51,29 @@ def _json_safe(value):
     return value
 
 
+@router.get('/donations')
+def list_donations_with_receipts(db: Session = Depends(get_db)):
+    """List all donations with receipt information for admin dashboard."""
+    donations = db.query(Donation).order_by(Donation.date_received.desc()).all()
+    result = []
+    for d in donations:
+        donor = db.query(Donor).filter(Donor.id == d.donor_id).first()
+        result.append({
+            'id': d.id,
+            'donor_id': d.donor_id,
+            'donor_name': donor.name if donor else 'Unknown',
+            'email': donor.email if donor else '',
+            'amount': float(d.amount),
+            'currency': d.currency,
+            'purpose': d.purpose or '',
+            'payment_method': d.payment_method.value if hasattr(d.payment_method, 'value') else d.payment_method,
+            'date_received': d.date_received.isoformat() if d.date_received else None,
+            'created_at': d.created_at.isoformat() if d.created_at else None,
+            'receipt': d.receipt,
+        })
+    return result
+
+
 @router.get('/backup')
 def backup(db: Session = Depends(get_db)):
     """Download every table as one JSON file (user accounts are left out on purpose)."""

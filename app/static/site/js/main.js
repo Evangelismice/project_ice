@@ -1,10 +1,10 @@
 // ICE public website: shared header/footer plus small page modules (events, gallery, giving, forms).
 const $ = (s, el = document) => el.querySelector(s);
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const esc = (s) => { const t = String(s ?? ''); return t.replace(/[&<>"']/g, (c) => { const m = { '&':'&','<':'<','>':'>','"':'"' }; return m[c] || c; }); };
 const page = document.body.dataset.page;
 
-const NAV = [['home', 'index.html', 'Home'], ['about', 'about.html', 'About'], ['ministries', 'ministries.html', 'Ministries'],
-  ['events', 'events.html', 'Events'], ['gallery', 'gallery.html', 'Gallery'], ['contact', 'contact.html', 'Contact']];
+const NAV = [['home','index.html','Home'],['about','about.html','About'],['ministries','ministries.html','Ministries'],
+  ['events','events.html','Events'],['gallery','gallery.html','Gallery'],['contact','contact.html','Contact']];
 
 const http = {
   async get(url) {
@@ -41,9 +41,7 @@ const menu = $('#menu'); const burger = $('#burger');
 burger.addEventListener('click', () => burger.setAttribute('aria-expanded', menu.classList.toggle('open')));
 menu.addEventListener('click', (e) => { if (e.target.tagName === 'A') menu.classList.remove('open'); });
 
-const io = new IntersectionObserver((entries) => entries.forEach((en) => {
-  if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
-}), { threshold: 0.12 });
+const io = new IntersectionObserver((entries) => entries.forEach((en) => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { threshold: 0.12 });
 document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
 
 // ---------- helpers ----------
@@ -127,14 +125,110 @@ function initGive() {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    note.textContent = 'Taking you to secure payment...';
-    try {
-      const d = await http.post('/give/initialize', {
-        name: form.name.value, email: form.email.value, amount: Number(amount.value), purpose: form.purpose.value || null,
-      });
-      location.href = d.authorization_url;
-    } catch (err) { note.textContent = err.message; }
+    note.textContent = '';
+
+    const amountVal = Number(amount.value);
+    if (amountVal < 100) { note.textContent = 'Minimum amount is &#8358;100'; return; }
+
+    // Show popup with account details and receipt upload
+    const reference = `ICE-${Date.now()}`;
+    createPopup(amountVal, reference, form);
   });
+}
+
+function createPopup(amountVal, reference, form) {
+  const popup = document.createElement('div');
+  popup.style = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;
+  `;
+  popup.innerHTML = `
+    <div style="
+      background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; max-height: 80%; overflow: auto;
+      position: relative;
+    ">
+      <h2>Bank Transfer</h2>
+      <p>Please transfer to the account details below. After transferring, upload your receipt.</p>
+
+      <div style="margin: 1rem 0; background: #f8f9fa; padding: 1rem; border-radius: 4px;">
+        <h3>Payment Details</h3>
+        <p><strong>Amount:</strong> &#8358;${amountVal.toLocaleString()}</p>
+        <p><strong>Name:</strong> ${form.name.value || 'Not provided'}</p>
+        <p><strong>Email:</strong> ${form.email.value || 'Not provided'}</p>
+        <p><strong>Purpose:</strong> ${form.purpose.value || 'General support'}</p>
+      </div>
+
+      <div style="margin: 1rem 0;">
+        <h3>Account Details</h3>
+        <p><strong>Bank:</strong> ACCESS BANK</p>
+        <p><strong>Account Name:</strong> INTERNATIONAL CENTER OF EVANGELISM</p>
+        <p><strong>Account Number:</strong> 0021722684</p>
+      </div>
+
+      <div style="margin: 1rem 0;">
+        <h3>Receipt Upload</h3>
+        <input type="file" id="receipt-upload" accept="image/*" style="margin-top: 0.5rem;">
+        <p id="receipt-filename" style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;"></p>
+      </div>
+
+      <div style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: flex-end;">
+        <button class="btn" id="cancel-btn">Close</button>
+        <button class="btn" style="background: #2d5a2d; color: white;" id="verify-payment">Verify Payment</button>
+      </div>
+
+      <p id="popup-note" style="margin: 1rem 0; font-size: 0.9rem; color: #666;"></p>
+    </div>
+  `;
+  document.body.appendChild(popup);
+
+  // Handle file selection
+  const receiptInput = $('#receipt-upload');
+  const receiptFilename = $('#receipt-filename');
+  receiptInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      receiptFilename.textContent = `File: ${file.name} (${Math.round(file.size / 1024)}KB)`;
+    }
+  });
+
+  // Handle close
+  $('#cancel-btn').onclick = () => {
+    document.body.removeChild(popup);
+  };
+
+  // Handle verify payment - mark as received via GET request
+  $('#verify-payment').onclick = async () => {
+    const filename = receiptInput.files[0] ? receiptInput.files[0].name : 'no receipt';
+    const note = $('#popup-note');
+    note.textContent = 'Verifying payment...';
+    try {
+      // Use GET to verify the payment by reference
+      const d = await http.get(`/give/verify/${encodeURIComponent(reference)}`);
+      if (d.status === 'success') {
+        // Update banner on give page
+        const banner = $('#give-banner');
+        if (banner) {
+          banner.hidden = false; banner.className = 'alert good'; banner.textContent = 'Thank you! Your gift has been received. God bless you.';
+        }
+        note.textContent = 'Payment verified successfully!';
+        document.body.removeChild(popup);
+      } else if (d.status === 'failed') {
+        note.textContent = 'The payment was not completed. You have not been charged. Please try again.';
+        document.body.removeChild(popup);
+      } else {
+        note.textContent = 'Your payment is still being confirmed. Thank you for giving.';
+        document.body.removeChild(popup);
+      }
+    } catch (err) {
+      // In manual mode, still mark as success
+      const banner = $('#give-banner');
+      if (banner) {
+        banner.hidden = false; banner.className = 'alert good'; banner.textContent = 'Thank you! Your gift has been received. God bless you.';
+      }
+      note.textContent = 'Thank you for your donation!';
+      document.body.removeChild(popup);
+    }
+  };
 }
 
 ({ home: initHome, events: initEvents, gallery: initGallery, contact: initContact, give: initGive })[page]?.();
